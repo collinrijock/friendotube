@@ -1,5 +1,5 @@
 // All network calls go through here so the content script never needs CORS.
-const DEFAULT_SERVER = "https://friendtube.collinrijock.com";
+const DEFAULT_SERVER = "https://friendotube.collinrijock.com";
 
 async function api(method, path, body) {
   const { server = DEFAULT_SERVER, token } = await chrome.storage.local.get(["server", "token"]);

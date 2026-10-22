@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { mkdtempSync } from "node:fs";
 import { createRequire } from "node:module";
 
-process.env.FRIENDTUBE_DB = `${tmpdir()}/friendtube-e2e-${process.pid}.db`;
+process.env.FRIENDOTUBE_DB = `${tmpdir()}/friendotube-e2e-${process.pid}.db`;
 const { server } = await import("../server/server.mjs");
 await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const base = `http://127.0.0.1:${server.address().port}`;
@@ -52,8 +52,8 @@ if (shelf) {
   const cards = await page.$$eval(".ft-card", (cs) => cs.map((c) => c.innerText.replace(/\s+/g, " ").trim()));
   console.log("shelf cards:", cards);
   if (!cards.some((c) => c.includes("Rafa recommends"))) fail("Rafa's rec missing from shelf");
-  await page.screenshot({ path: `${tmpdir()}/friendtube-home.png` });
-  console.log(`screenshot: ${tmpdir()}/friendtube-home.png`);
+  await page.screenshot({ path: `${tmpdir()}/friendotube-home.png` });
+  console.log(`screenshot: ${tmpdir()}/friendotube-home.png`);
 } else {
   const grid = await page.$('ytd-browse[page-subtype="home"] ytd-rich-grid-renderer');
   console.warn(grid ? "FAIL-ish: home grid exists but no shelf" : "WARN: signed-out home has no feed grid, shelf not testable here");

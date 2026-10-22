@@ -1,12 +1,12 @@
-// FriendTube API: friend groups share what YouTube puts in their feeds, and recommend videos to each other.
+// FriendoTube API: friend groups share what YouTube puts in their feeds, and recommend videos to each other.
 // Zero dependencies: node:http + node:sqlite (Node 22).
 import http from "node:http";
 import { DatabaseSync } from "node:sqlite";
 import { randomBytes } from "node:crypto";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 
-const DB_PATH = process.env.FRIENDTUBE_DB ?? new URL("../data/friendtube.db", import.meta.url).pathname;
+const DB_PATH = process.env.FRIENDOTUBE_DB ?? new URL("../data/friendotube.db", import.meta.url).pathname;
 const PORT = Number(process.env.PORT ?? 4330);
 const DAY = 86_400_000;
 const FEED_WINDOW = 3 * DAY; // friends' feed items newer than this are shown
@@ -33,6 +33,9 @@ const prune = () => {
 };
 prune();
 setInterval(prune, 3_600_000).unref();
+
+const page = (name) => readFileSync(new URL(`pages/${name}.html`, import.meta.url), "utf8");
+const PAGES = { "/": page("index"), "/privacy": page("privacy") };
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 const text = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
@@ -164,8 +167,16 @@ export const server = http.createServer(async (req, res) => {
   };
   try {
     const path = new URL(req.url, "http://x").pathname;
+    // The app was called FriendTube; 308 keeps POSTs POSTs.
+    if (/^friendtube\./.test(req.headers.host ?? "")) {
+      res.writeHead(308, { location: `https://friendotube.collinrijock.com${req.url}` });
+      return res.end();
+    }
     if (req.method === "OPTIONS") return send(204, {});
-    if (req.method === "GET" && path === "/") return send(200, { app: "friendtube", ok: true });
+    if (req.method === "GET" && PAGES[path]) {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      return res.end(PAGES[path]);
+    }
     const route = routes[`${req.method} ${path}`];
     need(route, 404, "not found");
     let me = null;
@@ -183,5 +194,5 @@ export const server = http.createServer(async (req, res) => {
 });
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  server.listen(PORT, "127.0.0.1", () => console.log(`friendtube on :${PORT}, db ${DB_PATH}`));
+  server.listen(PORT, "127.0.0.1", () => console.log(`friendotube on :${PORT}, db ${DB_PATH}`));
 }

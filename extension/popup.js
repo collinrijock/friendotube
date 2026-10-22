@@ -1,4 +1,4 @@
-const DEFAULT_SERVER = "https://friendtube.collinrijock.com";
+const DEFAULT_SERVER = "https://friendotube.collinrijock.com";
 const $ = (id) => document.getElementById(id);
 const api = (method, path, body) => chrome.runtime.sendMessage({ type: "api", method, path, body });
 const store = chrome.storage.local;

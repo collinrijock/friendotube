@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>Label</key><string>com.collinrijock.friendtube</string>
+	<key>Label</key><string>com.collinrijock.friendotube</string>
 	<key>ProgramArguments</key>
 	<array>
 		<string>/opt/homebrew/opt/node@22/bin/node</string>
@@ -11,10 +11,10 @@
 	</array>
 	<key>EnvironmentVariables</key>
 	<dict><key>PORT</key><string>4330</string></dict>
-	<key>WorkingDirectory</key><string>/Users/collinrijock/srv/friendtube</string>
+	<key>WorkingDirectory</key><string>/Users/collinrijock/srv/friendotube</string>
 	<key>RunAtLoad</key><true/>
 	<key>KeepAlive</key><true/>
-	<key>StandardOutPath</key><string>/Users/collinrijock/Library/Logs/friendtube.log</string>
-	<key>StandardErrorPath</key><string>/Users/collinrijock/Library/Logs/friendtube.log</string>
+	<key>StandardOutPath</key><string>/Users/collinrijock/Library/Logs/friendotube.log</string>
+	<key>StandardErrorPath</key><string>/Users/collinrijock/Library/Logs/friendotube.log</string>
 </dict>
 </plist>

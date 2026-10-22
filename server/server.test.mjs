@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { tmpdir } from "node:os";
 
-process.env.FRIENDTUBE_DB = `${tmpdir()}/friendtube-test-${process.pid}.db`;
+process.env.FRIENDOTUBE_DB = `${tmpdir()}/friendotube-test-${process.pid}.db`;
 const { server } = await import("./server.mjs");
 await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const base = `http://127.0.0.1:${server.address().port}`;
@@ -48,5 +48,16 @@ test("friends see each other's feeds and recs, strangers don't", async () => {
 
   await call(b, "POST", "/api/forget-me");
   assert.equal((await call(a, "GET", "/api/friends-feed")).feed.length, 0);
+  server.close();
+});
+
+test("pages and the old-domain redirect", async () => {
+  if (!server.listening) await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  const port = server.address().port;
+  assert.match(await (await fetch(`http://127.0.0.1:${port}/privacy`)).text(), /Limited Use/);
+  const { request } = await import("node:http");
+  const res = await new Promise((r) => request({ port, path: "/api/me?x=1", method: "POST", headers: { host: "friendtube.collinrijock.com" } }, r).end());
+  assert.equal(res.statusCode, 308);
+  assert.equal(res.headers.location, "https://friendotube.collinrijock.com/api/me?x=1");
   server.close();
 });

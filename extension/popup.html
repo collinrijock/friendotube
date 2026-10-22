@@ -15,12 +15,13 @@
   #err { color: #c00; min-height: 1em; }
   label { display: flex; gap: 6px; align-items: center; }
 </style>
-<h1>FriendTube</h1>
+<h1><img src="icons/icon32.png" width="20" height="20" alt="" style="vertical-align:-4px"> FriendoTube</h1>
 <div id="err"></div>
 
 <div id="signedOut" hidden>
   <p class="muted">Pick the name your friends will see.</p>
-  <form id="signup"><input id="name" type="text" placeholder="Your name" maxlength="40" required><button>Start</button></form>
+  <p class="muted">FriendoTube uploads the videos YouTube recommends you (video, title, channel) so the people in your groups can see them, and shows you theirs. Nothing else from your browser is collected. You can turn sharing off or delete everything at any time. <a href="https://friendotube.collinrijock.com/privacy" target="_blank">Privacy policy</a></p>
+  <form id="signup"><input id="name" type="text" placeholder="Your name" maxlength="40" required><button>Agree &amp; start</button></form>
 </div>
 
 <div id="signedIn" hidden>
@@ -30,10 +31,11 @@
   <form id="join"><input id="code" type="text" placeholder="Invite code" required><button>Join</button></form>
   <form id="create"><input id="groupName" type="text" placeholder="New group name" maxlength="60" required><button>Create</button></form>
   <h2>Privacy</h2>
-  <label><input id="shareFeed" type="checkbox"> Share my YouTube home feed with my groups</label>
+  <label><input id="shareFeed" type="checkbox"> Share what YouTube recommends me with my groups</label>
   <p><button class="link" id="signOut">Sign out</button> · <button class="link" id="forget">Delete my account + data</button></p>
 </div>
 
-<h2>Server</h2>
-<form id="serverForm"><input id="server" type="url" required><button>Save</button></form>
+<details><summary class="muted">Advanced</summary>
+  <form id="serverForm"><input id="server" type="url" required><button>Save</button></form>
+</details>
 <script src="popup.js"></script>

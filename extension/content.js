@@ -1,4 +1,4 @@
-// FriendTube on youtube.com: report what YouTube recommends you, show what it recommends your friends.
+// FriendoTube on youtube.com: report what YouTube recommends you, show what it recommends your friends.
 const api = (method, path, body) => chrome.runtime.sendMessage({ type: "api", method, path, body });
 const VIDEO_ID = /[?&]v=([A-Za-z0-9_-]{11})/;
 const ITEMS = "ytd-rich-item-renderer, ytd-compact-video-renderer, yt-lockup-view-model";
@@ -108,7 +108,7 @@ async function recommend(v) {
   const note = prompt(`Recommend “${v.title}” to your friends.\nAdd a note (optional):`, "");
   if (note === null) return;
   const r = await api("POST", "/api/recs", { videoId: v.id, title: v.title, channel: v.channel, note });
-  toast(r?.error ? `FriendTube: ${r.error}` : `Sent to ${r.sent} group${r.sent === 1 ? "" : "s"}`);
+  toast(r?.error ? `FriendoTube: ${r.error}` : `Sent to ${r.sent} group${r.sent === 1 ? "" : "s"}`);
 }
 
 function watchButton() {

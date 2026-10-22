@@ -1,0 +1,39 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body { width: 300px; margin: 0; padding: 14px; font: 13px system-ui, sans-serif; color: #0f0f0f; }
+  h1 { font-size: 16px; margin: 0 0 10px; }
+  h2 { font-size: 12px; text-transform: uppercase; color: #606060; margin: 14px 0 6px; }
+  form { display: flex; gap: 6px; margin: 6px 0; }
+  input[type=text], input[type=url] { flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid #ccc; border-radius: 6px; font: inherit; }
+  button { padding: 6px 10px; border: 0; border-radius: 6px; background: #3ea6ff; color: #0f0f0f; font: inherit; font-weight: 600; cursor: pointer; }
+  button.link { background: none; color: #606060; padding: 0; font-weight: 400; text-decoration: underline; }
+  .group { padding: 8px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 6px; }
+  .group b { display: block; }
+  .code { font-family: ui-monospace, monospace; background: #f2f2f2; padding: 1px 5px; border-radius: 4px; cursor: copy; }
+  .muted { color: #606060; }
+  #err { color: #c00; min-height: 1em; }
+  label { display: flex; gap: 6px; align-items: center; }
+</style>
+<h1>FriendTube</h1>
+<div id="err"></div>
+
+<div id="signedOut" hidden>
+  <p class="muted">Pick the name your friends will see.</p>
+  <form id="signup"><input id="name" type="text" placeholder="Your name" maxlength="40" required><button>Start</button></form>
+</div>
+
+<div id="signedIn" hidden>
+  <p class="muted">Signed in as <b id="me"></b></p>
+  <h2>Your groups</h2>
+  <div id="groups"></div>
+  <form id="join"><input id="code" type="text" placeholder="Invite code" required><button>Join</button></form>
+  <form id="create"><input id="groupName" type="text" placeholder="New group name" maxlength="60" required><button>Create</button></form>
+  <h2>Privacy</h2>
+  <label><input id="shareFeed" type="checkbox"> Share my YouTube home feed with my groups</label>
+  <p><button class="link" id="signOut">Sign out</button> · <button class="link" id="forget">Delete my account + data</button></p>
+</div>
+
+<h2>Server</h2>
+<form id="serverForm"><input id="server" type="url" required><button>Save</button></form>
+<script src="popup.js"></script>

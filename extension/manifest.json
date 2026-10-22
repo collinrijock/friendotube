@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "FriendTube",
+  "version": "0.1.0",
+  "description": "See what YouTube is showing your friends, and send each other videos.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://www.youtube.com/*", "https://friendtube.collinrijock.com/*"],
+  "background": { "service_worker": "bg.js" },
+  "action": { "default_popup": "popup.html", "default_title": "FriendTube" },
+  "content_scripts": [
+    { "matches": ["https://www.youtube.com/*"], "js": ["content.js"], "css": ["content.css"], "run_at": "document_idle" }
+  ]
+}

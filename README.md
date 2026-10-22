@@ -22,4 +22,4 @@ There are no passwords: the browser holds a random key. Signing out loses the ac
 - Test: `node --test server/server.test.mjs`
 - Live extension test against real youtube.com (YouTube's markup drifts; run when the shelf breaks): `PLAYWRIGHT=<path>/node_modules/playwright-core node test/e2e.mjs`
 - Deploy: `./deploy/deploy.sh`
-- Zip for friends: `cd extension && zip -r ../friendtube-extension.zip .`
+- Zip for friends: `python3 -m zipfile -c friendtube-extension.zip extension`

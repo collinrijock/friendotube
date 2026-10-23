@@ -2,7 +2,7 @@
 // Zero dependencies: node:http + node:sqlite (Node 22).
 import http from "node:http";
 import { DatabaseSync } from "node:sqlite";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { mkdirSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 
@@ -26,6 +26,26 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS recs_group ON recs(group_id, created_at);
 `);
 
+// Tokens are stored as SHA-256: a leaked DB has no usable keys, and lookups by hash leak nothing about the token.
+const hashToken = (t) => createHash("sha256").update(t).digest("hex");
+for (const u of db.prepare("SELECT id, token FROM users WHERE length(token) != 64").all()) {
+  db.prepare("UPDATE users SET token = ? WHERE id = ?").run(hashToken(u.token), u.id);
+}
+
+// Per-IP fixed-window rate limits. shortcut: in-memory, resets on restart and is per process; fine for one mini.
+const LIMITS = { signup: [5, 3_600_000], join: [20, 3_600_000], write: [120, 60_000], read: [300, 60_000] };
+const hits = new Map();
+function limit(bucket, ip) {
+  const [max, windowMs] = LIMITS[bucket];
+  const key = `${bucket}:${ip}`;
+  const now = Date.now();
+  let h = hits.get(key);
+  if (!h || h.reset <= now) hits.set(key, (h = { n: 0, reset: now + windowMs }));
+  h.n++;
+  if (h.n > max) throw Object.assign(new HttpError(429, "too many requests, slow down"), { retryAfter: Math.ceil((h.reset - now) / 1000) });
+}
+setInterval(() => { const now = Date.now(); for (const [k, h] of hits) if (h.reset <= now) hits.delete(k); }, 60_000).unref();
+
 const prune = () => {
   const cutoff = Date.now() - KEEP;
   db.prepare("DELETE FROM sightings WHERE seen_at < ?").run(cutoff);
@@ -37,6 +57,7 @@ setInterval(prune, 3_600_000).unref();
 const page = (name) => readFileSync(new URL(`pages/${name}.html`, import.meta.url), "utf8");
 const PAGES = { "/": page("index"), "/privacy": page("privacy") };
 
+const EXTENSION_ORIGIN = /^(chrome|moz|safari-web|webkit)-extension:\/\/[a-z0-9-]+$/i;
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 const text = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 const code = () => randomBytes(6).toString("base64url").replace(/[-_]/g, "x").slice(0, 8).toUpperCase();
@@ -71,7 +92,7 @@ const routes = {
     const name = text(body.name, 40);
     need(name, 400, "name required");
     const token = randomBytes(32).toString("base64url");
-    const { lastInsertRowid } = db.prepare("INSERT INTO users (name, token, created_at) VALUES (?, ?, ?)").run(name, token, Date.now());
+    const { lastInsertRowid } = db.prepare("INSERT INTO users (name, token, created_at) VALUES (?, ?, ?)").run(name, hashToken(token), Date.now());
     return { token, user: { id: Number(lastInsertRowid), name } };
   },
 
@@ -161,9 +182,14 @@ async function readJson(req) {
 }
 
 export const server = http.createServer(async (req, res) => {
-  const send = (status, data) => {
-    res.writeHead(status, { "content-type": "application/json", "access-control-allow-origin": "*", "access-control-allow-headers": "authorization, content-type" });
-    res.end(JSON.stringify(data));
+  // CORS only for extension pages (a self-hosted server isn't in host_permissions); websites get no access.
+  const origin = req.headers.origin ?? "";
+  const cors = EXTENSION_ORIGIN.test(origin)
+    ? { "access-control-allow-origin": origin, "access-control-allow-headers": "authorization, content-type", "access-control-allow-methods": "GET, POST" }
+    : {};
+  const send = (status, data, extra = {}) => {
+    res.writeHead(status, { "content-type": "application/json", "x-content-type-options": "nosniff", vary: "Origin", ...cors, ...extra });
+    res.end(status === 204 ? undefined : JSON.stringify(data));
   };
   try {
     const path = new URL(req.url, "http://x").pathname;
@@ -174,22 +200,27 @@ export const server = http.createServer(async (req, res) => {
     }
     if (req.method === "OPTIONS") return send(204, {});
     if (req.method === "GET" && PAGES[path]) {
-      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8", "x-content-type-options": "nosniff", "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:", "referrer-policy": "no-referrer" });
       return res.end(PAGES[path]);
     }
     const route = routes[`${req.method} ${path}`];
     need(route, 404, "not found");
+    // Only cloudflared reaches 127.0.0.1, and Cloudflare overwrites CF-Connecting-IP, so it can't be spoofed.
+    const ip = req.headers["cf-connecting-ip"] ?? req.socket.remoteAddress;
+    limit(req.method === "POST" ? "write" : "read", ip);
+    if (path === "/api/signup") limit("signup", ip);
+    if (path === "/api/groups/join") limit("join", ip);
     let me = null;
     if (path !== "/api/signup") {
       const token = (req.headers.authorization ?? "").replace(/^Bearer /, "");
-      me = token && db.prepare("SELECT id, name FROM users WHERE token = ?").get(token);
+      me = token && db.prepare("SELECT id, name FROM users WHERE token = ?").get(hashToken(token));
       need(me, 401, "sign in first");
     }
     const body = req.method === "POST" ? await readJson(req) : {};
     send(200, route(me, body));
   } catch (err) {
     if (!(err instanceof HttpError)) console.error(err);
-    send(err.status ?? 500, { error: err.status ? err.message : "server error" });
+    send(err.status ?? 500, { error: err.status ? err.message : "server error" }, err.retryAfter ? { "retry-after": String(err.retryAfter) } : {});
   }
 });
 

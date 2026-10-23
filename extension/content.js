@@ -90,7 +90,7 @@ async function renderShelf() {
   const items = [
     ...data.recs.map((r) => ({ ...r, rec: true, label: `${r.from} recommends` })),
     ...data.feed.map((v) => ({ ...v, label: `In ${names(v.friends)}'s feed` })),
-  ].filter((v) => !seen.has(v.id) && seen.add(v.id)).slice(0, 30);
+  ].filter((v) => /^[A-Za-z0-9_-]{11}$/.test(v.id) && !seen.has(v.id) && seen.add(v.id)).slice(0, 30); // ids go into URLs: never trust the server
   if (!items.length) return;
 
   const shelf = el("section", "ft-shelf");

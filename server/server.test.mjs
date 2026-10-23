@@ -61,3 +61,36 @@ test("pages and the old-domain redirect", async () => {
   assert.equal(res.headers.location, "https://friendotube.collinrijock.com/api/me?x=1");
   server.close();
 });
+
+test("security: rate limits, hashed tokens, extension-only CORS, no HTML sinks in the extension", async () => {
+  if (!server.listening) await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  const url = `http://127.0.0.1:${server.address().port}`;
+  const signup = (ip) => fetch(`${url}/api/signup`, { method: "POST", headers: { "cf-connecting-ip": ip }, body: JSON.stringify({ name: "x" }) });
+
+  const statuses = [];
+  for (let i = 0; i < 6; i++) statuses.push((await signup("203.0.113.9")).status);
+  assert.deepEqual(statuses, [200, 200, 200, 200, 200, 429]);
+  assert.equal((await signup("203.0.113.10")).status, 200); // another IP isn't affected
+  const limited = await signup("203.0.113.9");
+  assert.ok(Number(limited.headers.get("retry-after")) > 0);
+
+  const { token } = await (await signup("203.0.113.11")).json();
+  const { DatabaseSync } = await import("node:sqlite");
+  const stored = new DatabaseSync(process.env.FRIENDOTUBE_DB).prepare("SELECT token FROM users ORDER BY id DESC LIMIT 1").get().token;
+  assert.match(stored, /^[0-9a-f]{64}$/);
+  assert.notEqual(stored, token);
+  assert.equal((await fetch(`${url}/api/me`, { headers: { authorization: `Bearer ${token}` } })).status, 200);
+  assert.equal((await fetch(`${url}/api/me`, { headers: { authorization: `Bearer ${stored}` } })).status, 401); // the hash isn't a key
+
+  const ext = await fetch(`${url}/api/me`, { headers: { origin: "chrome-extension://abcdefghijklmnop" } });
+  assert.equal(ext.headers.get("access-control-allow-origin"), "chrome-extension://abcdefghijklmnop");
+  const site = await fetch(`${url}/api/me`, { headers: { origin: "https://evil.example" } });
+  assert.equal(site.headers.get("access-control-allow-origin"), null);
+
+  const { readdirSync, readFileSync } = await import("node:fs");
+  const dir = new URL("../extension/", import.meta.url);
+  for (const f of readdirSync(dir).filter((f) => /\.(js|html)$/.test(f))) {
+    assert.doesNotMatch(readFileSync(new URL(f, dir), "utf8"), /innerHTML|outerHTML|insertAdjacentHTML|document\.write|\beval\(|new Function/, f);
+  }
+  server.close();
+});

@@ -1,6 +1,6 @@
 # Chrome Web Store submission — FriendoTube 1.0.0
 
-**Submitted 2026-10-22, pending review.** Item `flolldilpofpclolpfojcfebhdeeleem`, publisher `f9352e97-b2ea-4491-9d1e-6f32ae8d1c9e` (Collin Rijock, non-trader, collinrijock@gmail.com). Test instructions give reviewers invite code `TTDM7BJQ` ("Store review" group, kept alive by `deploy/demo.mjs`).
+**Published** 2026-10: https://chromewebstore.google.com/detail/friendotube/flolldilpofpclolpfojcfebhdeeleem. Reviewers got a demo-group invite code in the private test instructions (kept alive by `deploy/demo.mjs`).
 
 Upload `friendotube-1.0.0.zip` (manifest at the zip root) at https://chrome.google.com/webstore/devconsole → **New item**. Then fill in:
 

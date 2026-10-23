@@ -1,25 +1,52 @@
-# FriendoTube
+<p align="center"><img src="extension/icons/icon128.png" width="96" alt=""></p>
+<h1 align="center">FriendoTube</h1>
+<p align="center">See what YouTube is recommending your friends, and send each other videos.</p>
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/friendotube/flolldilpofpclolpfojcfebhdeeleem"><b>Get it on the Chrome Web Store</b></a> ·
+  <a href="https://friendotube.collinrijock.com/">Website</a> ·
+  <a href="https://friendotube.collinrijock.com/privacy">Privacy policy</a>
+</p>
 
-A Chrome (and Copper) extension that lets a friend group see what YouTube is recommending each other, and send each other videos.
+![The "From your friends" row on the YouTube home page](store/screenshot-1-home.png)
 
-- **Your feed goes up:** on youtube.com home and the watch-page sidebar, the extension reports the recommended videos (id, title, channel) to the server. Turn it off in the popup ("Share my YouTube home feed").
-- **Friends' feeds come down:** a "From your friends" row at the top of your YouTube home shows friends' recommendations first, then videos from their feeds (last 3 days) that YouTube didn't show you.
-- **Sharing:** hover any card → **Recommend**, or the **Send to friends** button on any watch page. Optional note.
-- **Groups:** create one in the popup, send friends the invite code. You can be in several. Data older than 14 days is deleted; "Delete my account" removes everything of yours.
+YouTube shows every one of your friends a different feed. FriendoTube lets a friend group peek into each other's:
 
-## Install (friends)
+- **From your friends:** a row at the top of your YouTube home with the videos friends sent you, then videos YouTube is recommending them but didn't show you (last 3 days).
+- **Recommend:** hover any card, or click **Send to friends** on any video page, and add a note.
+- **Groups:** create one in the popup and share its invite code. You can be in several.
 
-1. Download `friendotube-extension.zip`, unzip it.
-2. Chrome: `chrome://extensions` → Developer mode → **Load unpacked** → pick the `extension` folder. Copper: Settings → Extensions → load from folder.
-3. Click the FriendoTube icon → enter your name → join with an invite code.
+Works in Chrome and in [Copper](https://github.com/copper-browser/Copper) (load the `extension/` folder).
 
-There are no passwords: the browser holds a random key. Signing out loses the account.
+## Privacy
 
-## Server
+The extension uploads only the videos YouTube recommends you on the home page and watch-page sidebar (video id, title, channel) and the videos you choose to send. Only members of your groups see them. No Google account, watch history or searches. Feed data is deleted after 14 days, sharing can be switched off in the popup, and **Delete my account** removes everything at once. Full policy: [friendotube.collinrijock.com/privacy](https://friendotube.collinrijock.com/privacy).
 
-`server/server.mjs` — Node 22, no dependencies (`node:http` + `node:sqlite`). Runs on the Mac mini (`~/srv/friendotube`, LaunchAgent `com.collinrijock.friendotube`, port 4330, DB `~/srv/friendotube/data/friendotube.db`, log `~/Library/Logs/friendotube.log`), exposed as `https://friendotube.collinrijock.com` by a direct cloudflared ingress rule (not via Caddy).
+## How it works
 
-- Test: `node --test server/server.test.mjs`
-- Live extension test against real youtube.com (YouTube's markup drifts; run when the shelf breaks): `PLAYWRIGHT=<path>/node_modules/playwright-core node test/e2e.mjs`
-- Deploy: `./deploy/deploy.sh`
-- Store zip (manifest at root): `cd extension && python3 -m zipfile -c ../friendotube-1.0.0.zip manifest.json bg.js content.js content.css popup.html popup.js icons`; listing, privacy answers and assets in `store/` (`store/STORE.md`)
+| Part | What it is |
+|---|---|
+| `extension/` | Manifest V3. `content.js` reads YouTube's recommendations and draws the row; `bg.js` makes every API call; `popup.*` handles name, groups and settings. All friend data is rendered with `textContent`. |
+| `server/server.mjs` | Node 22, zero dependencies (`node:http` + `node:sqlite`). Parameterized SQL, SHA-256-hashed access keys, per-IP rate limits, CORS only for extension origins, listens on 127.0.0.1 behind a Cloudflare tunnel. |
+| `store/` | Chrome Web Store listing text, icon and screenshot generators. |
+| `deploy/` | Deploy script and LaunchAgents for the hosted server. |
+
+## Run your own server
+
+```sh
+PORT=4330 FRIENDOTUBE_DB=./data/friendotube.db node server/server.mjs
+```
+
+Then put its URL in the popup under **Advanced**. The server trusts `CF-Connecting-IP` for rate limiting, so keep it on 127.0.0.1 behind a proxy that sets that header.
+
+## Develop
+
+```sh
+node --test server/server.test.mjs                                    # API, security checks
+PLAYWRIGHT=<path>/node_modules/playwright-core node test/e2e.mjs      # live youtube.com check
+```
+
+YouTube's markup changes often; when the row or the feed upload breaks, the e2e test shows where.
+
+## License
+
+[MIT](LICENSE)

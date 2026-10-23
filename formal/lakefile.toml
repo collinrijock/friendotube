@@ -1,0 +1,9 @@
+name = "friendotube"
+defaultTargets = ["FriendoTube", "gen"]
+
+[[lean_lib]]
+name = "FriendoTube"
+
+[[lean_exe]]
+name = "gen"
+root = "Gen"

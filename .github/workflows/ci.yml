@@ -1,0 +1,37 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  formal:
+    name: Lean proofs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          use-mathlib-cache: false
+          test: false
+      - name: No unfinished proofs
+        working-directory: formal
+        run: |
+          lake env lean Check.lean | tee axioms.txt
+          ! grep -q sorryAx axioms.txt
+      - name: Generated JS matches the Lean limits
+        working-directory: formal
+        run: |
+          lake exe gen ..
+          git diff --exit-code -- ../server/limits.gen.mjs ../extension/limits.gen.js
+      - name: Extension has no HTML sinks outside the model
+        run: |
+          ! grep -nE 'innerHTML|outerHTML|insertAdjacentHTML|document\.write|\beval\(|new Function|setAttribute\(.on' extension/*.js extension/*.html
+
+  server:
+    name: Server tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test --no-warnings server/server.test.mjs

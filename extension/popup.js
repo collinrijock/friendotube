@@ -1,3 +1,5 @@
+// Rendering mirrors formal/FriendoTube/Render.lean (popup, groupRow; theorem popup_safe):
+// server data only reaches textContent, confirm() text and the clipboard.
 const DEFAULT_SERVER = "https://friendotube.collinrijock.com";
 const $ = (id) => document.getElementById(id);
 const api = (method, path, body) => chrome.runtime.sendMessage({ type: "api", method, path, body });
@@ -8,6 +10,7 @@ function showError(r) {
   return !r?.error;
 }
 
+// Lean: groupRow, one per group.
 function renderGroups(groups) {
   $("groups").replaceChildren(...(groups.length ? groups.map((g) => {
     const div = document.createElement("div");

@@ -27,8 +27,14 @@ The extension uploads only the videos YouTube recommends you on the home page an
 |---|---|
 | `extension/` | Manifest V3. `content.js` reads YouTube's recommendations and draws the row; `bg.js` makes every API call; `popup.*` handles name, groups and settings. All friend data is rendered with `textContent`. |
 | `server/server.mjs` | Node 22, zero dependencies (`node:http` + `node:sqlite`). Parameterized SQL, SHA-256-hashed access keys, per-IP rate limits, CORS only for extension origins, listens on 127.0.0.1 behind a Cloudflare tunnel. |
+| `formal/` | Lean 4 model of the API and the extension's rendering, with proofs of the auth, membership, input-bound and no-HTML-injection properties. Limits are generated from it. See [formal/README.md](formal/README.md). |
 | `store/` | Chrome Web Store listing text, icon and screenshot generators. |
 | `deploy/` | Deploy script and LaunchAgents for the hosted server. |
+
+## Security
+
+The security-critical core is modelled in Lean 4 and its properties are machine-checked on every push ([formal/README.md](formal/README.md)):
+every route but signup needs a valid key; users only write their own data and only read their groups'; joining needs the exact invite code; feeds only contain group members' items; every stored string is capped; and friend data only ever reaches `textContent`, never `innerHTML`. The README there lists the trusted boundary: what the proofs assume rather than prove.
 
 ## Run your own server
 
@@ -41,7 +47,8 @@ Then put its URL in the popup under **Advanced**. The server trusts `CF-Connecti
 ## Develop
 
 ```sh
-node --test server/server.test.mjs                                    # API, security checks
+(cd formal && lake build)                                             # Lean proofs
+node --test server/server.test.mjs                                    # API
 PLAYWRIGHT=<path>/node_modules/playwright-core node test/e2e.mjs      # live youtube.com check
 ```
 

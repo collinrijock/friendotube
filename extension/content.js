@@ -1,4 +1,7 @@
 // FriendoTube on youtube.com: report what YouTube recommends you, show what it recommends your friends.
+// Rendering mirrors formal/FriendoTube/Render.lean: every DOM write below is one `Write` in that model.
+// Untrusted data only goes through el(…, text) → textContent (theorems shelf_safe, toast_safe, prompt_safe);
+// URLs only get a validated id (theorem shelf_urls). FT_LIMITS comes from limits.gen.js (generated from Lean).
 const api = (method, path, body) => chrome.runtime.sendMessage({ type: "api", method, path, body });
 const VIDEO_ID = /[?&]v=([A-Za-z0-9_-]{11})/;
 const ITEMS = "ytd-rich-item-renderer, ytd-compact-video-renderer, yt-lockup-view-model";
@@ -55,6 +58,7 @@ async function loadFeed() {
 
 const names = (list) => list.length <= 2 ? list.join(" & ") : `${list.slice(0, 2).join(", ")} +${list.length - 2}`;
 
+// Lean: the `lit .className` / `untrusted .textContent` writes. The only way text reaches the DOM.
 function el(tag, cls, text) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -62,6 +66,7 @@ function el(tag, cls, text) {
   return e;
 }
 
+// Lean: card (theorems card_safe, card_urls).
 function card(v) {
   const a = el("a", "ft-card");
   a.href = `/watch?v=${v.id}`;
@@ -78,6 +83,7 @@ function card(v) {
   return a;
 }
 
+// Lean: shelf — drop invalid ids, cap at MAX_SHELF, render cards (theorems shelf_safe, shelf_urls).
 async function renderShelf() {
   if (location.pathname !== "/" || !signedIn() || loading) return;
   const grid = document.querySelector('ytd-browse[page-subtype="home"] ytd-rich-grid-renderer');
@@ -90,7 +96,7 @@ async function renderShelf() {
   const items = [
     ...data.recs.map((r) => ({ ...r, rec: true, label: `${r.from} recommends` })),
     ...data.feed.map((v) => ({ ...v, label: `In ${names(v.friends)}'s feed` })),
-  ].filter((v) => /^[A-Za-z0-9_-]{11}$/.test(v.id) && !seen.has(v.id) && seen.add(v.id)).slice(0, 30); // ids go into URLs: never trust the server
+  ].filter((v) => typeof v.id === "string" && FT_LIMITS.VIDEO_ID.test(v.id) && !seen.has(v.id) && seen.add(v.id)).slice(0, FT_LIMITS.MAX_SHELF);
   if (!items.length) return;
 
   const shelf = el("section", "ft-shelf");
@@ -104,6 +110,7 @@ async function renderShelf() {
 }
 
 // --- 3. Recommend: from the shelf, or the video you're watching ----------------------------
+// Lean: prompt (theorem prompt_safe) — the title is only dialog text.
 async function recommend(v) {
   const note = prompt(`Recommend “${v.title}” to your friends.\nAdd a note (optional):`, "");
   if (note === null) return;
@@ -111,6 +118,7 @@ async function recommend(v) {
   toast(r?.error ? `FriendoTube: ${r.error}` : `Sent to ${r.sent} group${r.sent === 1 ? "" : "s"}`);
 }
 
+// Lean: sendButton (theorem sendButton_safe).
 function watchButton() {
   let btn = document.querySelector(".ft-send");
   const onWatch = location.pathname === "/watch" && signedIn();
@@ -129,6 +137,7 @@ function watchButton() {
   document.body.append(btn);
 }
 
+// Lean: toast (theorem toast_safe) — server messages are textContent only.
 function toast(message) {
   const t = el("div", "ft-toast", message);
   document.body.append(t);

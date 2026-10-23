@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key><string>com.collinrijock.friendotube-demo</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/opt/homebrew/opt/node@22/bin/node</string>
+		<string>deploy/demo.mjs</string>
+	</array>
+	<key>WorkingDirectory</key><string>/Users/collinrijock/srv/friendotube</string>
+	<key>RunAtLoad</key><true/>
+	<key>StartInterval</key><integer>43200</integer>
+	<key>StandardOutPath</key><string>/Users/collinrijock/Library/Logs/friendotube-demo.log</string>
+	<key>StandardErrorPath</key><string>/Users/collinrijock/Library/Logs/friendotube-demo.log</string>
+</dict>
+</plist>

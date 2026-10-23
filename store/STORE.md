@@ -1,5 +1,7 @@
 # Chrome Web Store submission — FriendoTube 1.0.0
 
+**Submitted 2026-10-22, pending review.** Item `flolldilpofpclolpfojcfebhdeeleem`, publisher `f9352e97-b2ea-4491-9d1e-6f32ae8d1c9e` (Collin Rijock, non-trader, collinrijock@gmail.com). Test instructions give reviewers invite code `TTDM7BJQ` ("Store review" group, kept alive by `deploy/demo.mjs`).
+
 Upload `friendotube-1.0.0.zip` (manifest at the zip root) at https://chrome.google.com/webstore/devconsole → **New item**. Then fill in:
 
 ## Store listing
@@ -25,7 +27,7 @@ Upload `friendotube-1.0.0.zip` (manifest at the zip root) at https://chrome.goog
 - **Host permission `https://www.youtube.com/*`:** reads the recommended videos (id, title, channel) on the YouTube home page and watch-page sidebar, and adds the "From your friends" row and "Send to friends" button.
 - **Host permission `https://friendotube.collinrijock.com/*`:** the FriendoTube server that stores groups, shared feed videos and recommendations.
 - **Remote code:** No, I am not using remote code.
-- **Data collected:** tick **Personally identifiable information** (the display name the user picks) and **Website content** (titles/ids of videos YouTube recommends, notes the user writes). Leave everything else unticked (no web history, no location, no authentication info, no personal communications, no financial/health data).
+- **Data collected:** tick **Personally identifiable information** (the display name the user picks), **Personal communications** (notes on recommendations) and **Website content** (titles/ids of videos YouTube recommends, notes the user writes). Leave everything else unticked (no web history, no location, no authentication info, no personal communications, no financial/health data).
 - **Certify all three:** not sold to third parties; not used for unrelated purposes; not used for creditworthiness/lending.
 - **Privacy policy URL:** https://friendotube.collinrijock.com/privacy
 
